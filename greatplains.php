@@ -125,31 +125,20 @@ function greatplains_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
 }
 
 /**
- * Functions below this ship commented out. Uncomment as required.
+ * Implements hook_civicrm_buildForm().
  *
-
-/**
- * Implements hook_civicrm_preProcess().
+ * Set a default value for an event price set field.
  *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
- *
-function greatplains_civicrm_preProcess($formName, &$form) {
-
-} // */
-
-/**
- * Implements hook_civicrm_navigationMenu().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_navigationMenu
- *
-function greatplains_civicrm_navigationMenu(&$menu) {
-  _greatplains_civix_insert_navigation_menu($menu, NULL, array(
-    'label' => ts('The Page', array('domain' => 'biz.jmaconsulting.greatplains')),
-    'name' => 'the_page',
-    'url' => 'civicrm/the-page',
-    'permission' => 'access CiviReport,access CiviContribute',
-    'operator' => 'OR',
-    'separator' => 0,
-  ));
-  _greatplains_civix_navigationMenu($menu);
-} // */
+ * @param string $formName
+ * @param CRM_Core_Form $form
+ */
+function greatplains_civicrm_buildForm($formName, &$form) {;
+  if ($formName == 'CRM_Financial_Form_Export') {
+    $optionTypes = array(
+      'IIF' => ts('Export to IIF'),
+      'CSV' => ts('Export to CSV'),
+      'MGP' => ts('Export to Microsoft Great Plains'),
+    );
+    $form->addRadio('export_format', NULL, $optionTypes, NULL, '<br/>', TRUE);
+  }
+}
