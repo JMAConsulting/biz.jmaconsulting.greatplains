@@ -154,18 +154,35 @@ function greatplains_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
  * @param CRM_Core_Form $form
  */
 function greatplains_civicrm_buildForm($formName, &$form) {
+  if ($formName == 'CRM_Financial_Form_Search') {
+    $optionTypes = greatplains_get_export_types();
+    $htmlOptions = '';
+    foreach ($optionTypes as $key => $optionType) {
+      $htmlOptions .= "<option value='{$key}'>{$optionType}</option>"; 
+    }
+    $form->assign('htmlOptions', $htmlOptions);
+    CRM_Core_Region::instance('page-body')->add(array(
+      'template' => 'FinancialSearch.tpl',
+    ));
+  }
   if ($formName == 'CRM_Financial_Form_Export') {
-    $optionTypes = array(
-      'IIF' => ts('Export to IIF'),
-      'CSV' => ts('Export to CSV'),
-      'MGP' => ts('Export to Microsoft Great Plains'),
-    );
-    $optionTypes = array_merge(
-      $optionTypes,
-      CRM_Core_OptionGroup::values('financial_batch_export_format')
-    );
+    $optionTypes = greatplains_get_export_types();
     $form->addRadio('export_format', NULL, $optionTypes, NULL, '<br/>', TRUE);
   }
+}
+
+/**
+ * build export types
+ */
+function greatplains_get_export_types() {
+  $optionTypes = array(
+    'IIF' => ts('Export to IIF'),
+    'CSV' => ts('Export to CSV'),
+  );
+  return array_merge(
+    $optionTypes,
+    CRM_Core_OptionGroup::values('financial_batch_export_format')
+  );
 }
 
 /**
