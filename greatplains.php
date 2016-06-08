@@ -132,7 +132,7 @@ function greatplains_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
  * @param string $formName
  * @param CRM_Core_Form $form
  */
-function greatplains_civicrm_buildForm($formName, &$form) {;
+function greatplains_civicrm_buildForm($formName, &$form) {
   if ($formName == 'CRM_Financial_Form_Export') {
     $optionTypes = array(
       'IIF' => ts('Export to IIF'),
@@ -140,5 +140,26 @@ function greatplains_civicrm_buildForm($formName, &$form) {;
       'MGP' => ts('Export to Microsoft Great Plains'),
     );
     $form->addRadio('export_format', NULL, $optionTypes, NULL, '<br/>', TRUE);
+  }
+}
+
+/**
+ * Implements hook_civicrm_postProcess().
+ *
+ * @param string $formName
+ * @param CRM_Core_Form $form
+ */
+function greatplains_civicrm_postProcess($formName, &$form) {
+  if ($formName == 'CRM_Financial_Form_Export') {
+    $exportFormat = $form->getVar('_exportFormat');
+    if (!in_array($exportFormat, array('IIF', 'CSV'))) {
+      $exporterClass = "CRM_Financial_BAO_ExportFormat_" . $exportFormat;
+      $exporter = new $exporterClass();
+      $batchIds = explode(',', $form->getVar('_batchIds'));
+      foreach ($batchIds as $batchId) {
+        $export[$batchId] = $exporter->generateExportQuery($batchId);
+      }
+      $exporter->makeCSV($export);
+    }
   }
 }
