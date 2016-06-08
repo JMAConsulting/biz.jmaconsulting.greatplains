@@ -83,6 +83,27 @@ function greatplains_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_managed
  */
 function greatplains_civicrm_managed(&$entities) {
+  $entities[] = array(
+    'module' => 'biz.jmaconsulting.greatplains',
+    'name' => 'greatplains',
+    'update' => 'never',
+    'entity' => 'OptionGroup',
+    'params' => array(
+      'title' => 'Financial Batch Export Format',
+      'name' => 'financial_batch_export_format',
+      'description' => 'Financial Batch Export Format',
+      'is_active' => 1,
+      'is_reserved' => 1,
+      'version' => 3,
+      'sequential' => 1,
+      'api.OptionValue.create' => array(
+        'label' => 'Export to Microsoft Great Plains',
+        'value' => 'MGP',
+        'is_default' => 1,
+        'is_active' => 1,
+      ),
+    ),
+  );
   _greatplains_civix_civicrm_managed($entities);
 }
 
@@ -138,6 +159,10 @@ function greatplains_civicrm_buildForm($formName, &$form) {
       'IIF' => ts('Export to IIF'),
       'CSV' => ts('Export to CSV'),
       'MGP' => ts('Export to Microsoft Great Plains'),
+    );
+    $optionTypes = array_merge(
+      $optionTypes,
+      CRM_Core_OptionGroup::values('financial_batch_export_format')
     );
     $form->addRadio('export_format', NULL, $optionTypes, NULL, '<br/>', TRUE);
   }
