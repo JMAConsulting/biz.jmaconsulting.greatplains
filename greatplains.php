@@ -155,15 +155,9 @@ function greatplains_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
  */
 function greatplains_civicrm_buildForm($formName, &$form) {
   if ($formName == 'CRM_Financial_Form_Search') {
-    $optionTypes = greatplains_get_export_types();
-    $htmlOptions = '';
-    foreach ($optionTypes as $key => $optionType) {
-      $htmlOptions .= "<option value='{$key}'>{$optionType}</option>"; 
-    }
-    $form->assign('htmlOptions', $htmlOptions);
-    CRM_Core_Region::instance('page-body')->add(array(
-      'template' => 'CRM/FinancialSearch.tpl',
-    ));
+    $exportTypes = $form->get_template_vars('exportTypes');
+    $exportTypes = greatplains_get_export_types($exportTypes);
+    $form->assign('exportTypes', $exportTypes);
   }
   if ($formName == 'CRM_Financial_Form_Export') {
     $optionTypes = greatplains_get_export_types();
@@ -174,11 +168,13 @@ function greatplains_civicrm_buildForm($formName, &$form) {
 /**
  * build export types
  */
-function greatplains_get_export_types() {
-  $optionTypes = array(
-    'IIF' => ts('Export to IIF'),
-    'CSV' => ts('Export to CSV'),
-  );
+function greatplains_get_export_types($optionTypes = NULL) {
+  if (!$optionTypes) {
+    $optionTypes = array(
+      'IIF' => ts('Export to IIF'),
+      'CSV' => ts('Export to CSV'),
+    );
+  }
   return array_merge(
     $optionTypes,
     CRM_Core_OptionGroup::values('financial_batch_export_format')
