@@ -34,6 +34,9 @@
 /**
  * @link http://wiki.civicrm.org/confluence/display/CRM/CiviAccounts+Specifications+-++Batches#CiviAccountsSpecifications-Batches-%C2%A0Overviewofimplementation
  */
+/**
+ * This files supports the export of financial batches to Microsoft Great Plains in the format it expects.
+ */ 
 class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat {
 
   /**
