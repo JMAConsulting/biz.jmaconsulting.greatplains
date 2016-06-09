@@ -81,11 +81,11 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
 (
       SELECT
       ft.id as ft_id,
-      fi.id as fi_id,
+      -1 as fi_id,
       'C' as credit_or_debit,
       eb.batch_id as batch_id,
       ft.trxn_date as trxn_date,
-      efti.amount AS amount,
+      eft.amount AS amount,
       fa_to.accounting_code AS account_code,
       contact_to.display_name AS contact_name
       FROM civicrm_entity_batch eb
@@ -94,17 +94,15 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
       LEFT JOIN civicrm_entity_financial_trxn eft ON (eft.financial_trxn_id = ft.id AND eft.entity_table = 'civicrm_contribution')
       LEFT JOIN civicrm_contribution cc ON (eft.entity_id = cc.id) 
       LEFT JOIN civicrm_contact contact_to ON contact_to.id = fa_to.contact_id
-      LEFT JOIN civicrm_entity_financial_trxn efti ON (efti.financial_trxn_id  = ft.id AND efti.entity_table = 'civicrm_financial_item')
-      LEFT JOIN civicrm_financial_item fi ON fi.id = efti.entity_id
       WHERE eb.batch_id = ( %1 )
 UNION
       SELECT
       ft.id as ft_id,
-      fi.id as fi_id,
+      IF(fa_from.id IS NULL, fi.id, 0) fi_id,
       'D' as credit_or_debit,
       eb.batch_id as batch_id,
       ft.trxn_date as trxn_date,
-      -efti.amount AS amount,
+      IF(fa_from.id IS NULL, -efti.amount, -eft.amount) AS amount,
       IF(fa_from.id IS NULL, fa_from_li.accounting_code, fa_from.accounting_code) AS account_code,
       IF(fa_from.id IS NULL, contact_from_contrib.display_name, contact_from_fa.display_name) AS contact_name
       FROM civicrm_entity_batch eb
