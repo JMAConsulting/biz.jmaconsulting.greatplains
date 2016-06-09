@@ -82,7 +82,7 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
       SELECT
       ft.id as ft_id,
       -1 as fi_id,
-      'C' as credit_or_debit,
+      'D' as credit_or_debit,
       eb.batch_id as batch_id,
       ft.trxn_date as trxn_date,
       eft.amount AS amount,
@@ -99,7 +99,7 @@ UNION
       SELECT
       ft.id as ft_id,
       IF(fa_from.id IS NULL, fi.id, 0) fi_id,
-      'D' as credit_or_debit,
+      'C' as credit_or_debit,
       eb.batch_id as batch_id,
       ft.trxn_date as trxn_date,
       IF(fa_from.id IS NULL, -efti.amount, -eft.amount) AS amount,
@@ -117,7 +117,7 @@ UNION
       LEFT JOIN civicrm_contact contact_from_fa ON contact_from_fa.id=fa_from.contact_id
       WHERE eb.batch_id = ( %1 )
 ) as S1
-ORDER BY batch_id, ft_id, fi_id, credit_or_debit;";
+ORDER BY batch_id, ft_id, fi_id, credit_or_debit DESC;";
 
     CRM_Utils_Hook::batchQuery($sql);
 
