@@ -77,49 +77,49 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
    * @return Object
    */
   public function generateExportQuery($batchId) {
-    $sql = "SELECT
-      ft.id as financial_trxn_id,
-      ft.trxn_date,
-      fa_to.accounting_code AS to_account_code,
-      fa_to.name AS to_account_name,
-      fa_to.account_type_code AS to_account_type_code,
-      ft.total_amount AS debit_total_amount,
-      ft.trxn_id AS trxn_id,
-      cov.label AS payment_instrument,
-      ft.check_number,
-      c.source AS source,
-      c.id AS contribution_id,
-      c.contact_id AS contact_id,
-      eb.batch_id AS batch_id,
-      ft.currency AS currency,
-      cov_status.label AS status,
-      CASE
-        WHEN efti.entity_id IS NOT NULL
-        THEN efti.amount
-        ELSE eftc.amount
-      END AS amount,
-      fa_from.account_type_code AS credit_account_type_code,
-      fa_from.accounting_code AS credit_account,
-      fa_from.name AS credit_account_name,
-      fac.account_type_code AS from_credit_account_type_code,
-      fac.accounting_code AS from_credit_account,
-      fac.name AS from_credit_account_name,
-      fi.description AS item_description
+    $sql = "SELECT batch_id, trxn_date, amount, account_code, contact_name FROM 
+(
+      SELECT
+      ft.id as ft_id,
+      fi.id as fi_id,
+      'C' as credit_or_debit,
+      eb.batch_id as batch_id,
+      ft.trxn_date as trxn_date,
+      efti.amount AS amount,
+      fa_to.accounting_code AS account_code,
+      contact_to.display_name AS contact_name
       FROM civicrm_entity_batch eb
       LEFT JOIN civicrm_financial_trxn ft ON (eb.entity_id = ft.id AND eb.entity_table = 'civicrm_financial_trxn')
       LEFT JOIN civicrm_financial_account fa_to ON fa_to.id = ft.to_financial_account_id
-      LEFT JOIN civicrm_financial_account fa_from ON fa_from.id = ft.from_financial_account_id
-      LEFT JOIN civicrm_option_group cog ON cog.name = 'payment_instrument'
-      LEFT JOIN civicrm_option_value cov ON (cov.value = ft.payment_instrument_id AND cov.option_group_id = cog.id)
-      LEFT JOIN civicrm_entity_financial_trxn eftc ON (eftc.financial_trxn_id  = ft.id AND eftc.entity_table = 'civicrm_contribution')
-      LEFT JOIN civicrm_contribution c ON c.id = eftc.entity_id
-      LEFT JOIN civicrm_option_group cog_status ON cog_status.name = 'contribution_status'
-      LEFT JOIN civicrm_option_value cov_status ON (cov_status.value = ft.status_id AND cov_status.option_group_id = cog_status.id)
+      LEFT JOIN civicrm_entity_financial_trxn eft ON (eft.financial_trxn_id = ft.id AND eft.entity_table = 'civicrm_contribution')
+      LEFT JOIN civicrm_contribution cc ON (eft.entity_id = cc.id) 
+      LEFT JOIN civicrm_contact contact_to ON contact_to.id = fa_to.contact_id
       LEFT JOIN civicrm_entity_financial_trxn efti ON (efti.financial_trxn_id  = ft.id AND efti.entity_table = 'civicrm_financial_item')
       LEFT JOIN civicrm_financial_item fi ON fi.id = efti.entity_id
-      LEFT JOIN civicrm_financial_account fac ON fac.id = fi.financial_account_id
-      LEFT JOIN civicrm_financial_account fa ON fa.id = fi.financial_account_id
-      WHERE eb.batch_id = ( %1 )";
+      WHERE eb.batch_id = ( %1 )
+UNION
+      SELECT
+      ft.id as ft_id,
+      fi.id as fi_id,
+      'D' as credit_or_debit,
+      eb.batch_id as batch_id,
+      ft.trxn_date as trxn_date,
+      -efti.amount AS amount,
+      IF(fa_from.id IS NULL, fa_from_li.accounting_code, fa_from.accounting_code) AS account_code,
+      IF(fa_from.id IS NULL, contact_from_contrib.display_name, contact_from_fa.display_name) AS contact_name
+      FROM civicrm_entity_batch eb
+      LEFT JOIN civicrm_financial_trxn ft ON (eb.entity_id = ft.id AND eb.entity_table = 'civicrm_financial_trxn')
+      LEFT JOIN civicrm_financial_account fa_from ON fa_from.id = ft.from_financial_account_id
+      LEFT JOIN civicrm_entity_financial_trxn eft ON (eft.financial_trxn_id = ft.id AND eft.entity_table = 'civicrm_contribution')
+      LEFT JOIN civicrm_contribution cc ON (eft.entity_id = cc.id)
+      LEFT JOIN civicrm_contact contact_from_contrib ON contact_from_contrib.id = cc.contact_id
+      LEFT JOIN civicrm_entity_financial_trxn efti ON (efti.financial_trxn_id  = ft.id AND efti.entity_table = 'civicrm_financial_item')
+      LEFT JOIN civicrm_financial_item fi ON fi.id = efti.entity_id
+      LEFT JOIN civicrm_financial_account fa_from_li ON fa_from_li.id = fi.financial_account_id 
+      LEFT JOIN civicrm_contact contact_from_fa ON contact_from_fa.id=fa_from.contact_id
+      WHERE eb.batch_id = ( %1 )
+) as S1
+ORDER BY batch_id, ft_id, fi_id, credit_or_debit;";
 
     CRM_Utils_Hook::batchQuery($sql);
 
@@ -173,8 +173,6 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
    * @param array $export
    */
   public function makeCSV($export) {
-    // getting data from admin page
-    $prefixValue = Civi::settings()->get('contribution_invoice_settings');
 
     foreach ($export as $batchId => $dao) {
       $financialItems = array();
@@ -184,42 +182,12 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
       $queryResults = array();
 
       while ($dao->fetch()) {
-        $creditAccountName = $creditAccountType = $creditAccount = NULL;
-        if ($dao->credit_account) {
-          $creditAccountName = $dao->credit_account_name;
-          $creditAccountType = $dao->credit_account_type_code;
-          $creditAccount = $dao->credit_account;
-        }
-        else {
-          $creditAccountName = $dao->from_credit_account_name;
-          $creditAccountType = $dao->from_credit_account_type_code;
-          $creditAccount = $dao->from_credit_account;
-        }
-
-        $invoiceNo = CRM_Utils_Array::value('invoice_prefix', $prefixValue) . "" . $dao->contribution_id;
-
         $financialItems[] = array(
           'Batch ID' => $dao->batch_id,
-          'Invoice No' => $invoiceNo,
-          'Contact ID' => $dao->contact_id,
-          'Financial Trxn ID/Internal ID' => $dao->financial_trxn_id,
-          'Transaction Date' => $dao->trxn_date,
-          'Debit Account' => $dao->to_account_code,
-          'Debit Account Name' => $dao->to_account_name,
-          'Debit Account Type' => $dao->to_account_type_code,
-          'Debit Account Amount (Unsplit)' => $dao->debit_total_amount,
-          'Transaction ID (Unsplit)' => $dao->trxn_id,
-          'Debit amount (Split)' => $dao->amount,
-          'Payment Instrument' => $dao->payment_instrument,
-          'Check Number' => $dao->check_number,
-          'Source' => $dao->source,
-          'Currency' => $dao->currency,
-          'Transaction Status' => $dao->status,
-          'Amount' => $dao->amount,
-          'Credit Account' => $creditAccount,
-          'Credit Account Name' => $creditAccountName,
-          'Credit Account Type' => $creditAccountType,
-          'Item Description' => $dao->item_description,
+          'Date' => $this->format($dao->trxn_date, 'date'),
+          'Reference' => $dao->contact_name,
+          'Acct' => $dao->account_code,
+          'Amount' => $this->format($dao->amount, 'money'),
         );
 
         end($financialItems);
@@ -233,6 +201,48 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
       self::export($financialItems);
     }
     parent::initiateDownload();
+  }
+  
+
+  /**
+   * @param string $s
+   *   the input string
+   * @param string $type
+   *   type can be string, date, or notepad
+   *
+   * @return bool|mixed|string
+   */
+  public static function format($s, $type = 'string') {
+    // If I remember right there's a couple things:
+    // NOTEPAD field needs to be surrounded by quotes and then get rid of double quotes inside, also newlines should be literal \n, and ditch any ascii 0x0d's.
+    // Date handling has changed over the years. It used to only understand mm/dd/yy but I think now it might depend on your OS settings. Sometimes mm/dd/yyyy works but sometimes it wants yyyy/mm/dd, at least where I had used it.
+    // In all cases need to do something with tabs in the input.
+
+    switch ($type) {
+      case 'date':
+        $dateFormat = Civi::settings()->get('dateformatFinancialBatch');
+        $sout = CRM_Utils_Date::customFormat($s, $dateFormat);
+        break;
+
+      case 'money':
+        $sout = CRM_Utils_Money::format($s, NULL, NULL, TRUE);
+        break;
+
+      case 'string':
+      case 'notepad':
+        $s2 = str_replace("\n", '\n', $s);
+        $s3 = str_replace("\r", '', $s2);
+        $s4 = str_replace('"', "'", $s3);
+        if ($type == 'notepad') {
+          $sout = '"' . $s4 . '"';
+        }
+        else {
+          $sout = $s4;
+        }
+        break;
+    }
+
+    return $sout;
   }
 
   /**
