@@ -162,7 +162,7 @@ function greatplains_civicrm_buildForm($formName, &$form) {
     }
     $form->assign('htmlOptions', $htmlOptions);
     CRM_Core_Region::instance('page-body')->add(array(
-      'template' => 'FinancialSearch.tpl',
+      'template' => 'CRM/FinancialSearch.tpl',
     ));
   }
   if ($formName == 'CRM_Financial_Form_Export') {
