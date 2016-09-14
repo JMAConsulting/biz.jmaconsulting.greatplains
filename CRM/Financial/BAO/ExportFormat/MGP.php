@@ -89,14 +89,19 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
       eb.batch_id as batch_id,
       ft.trxn_date as trxn_date,
       eft.amount AS amount,
-      fa_to.accounting_code AS account_code,
-      contact_to.display_name AS contact_name
+      IF(fa_to.id IS NULL, fa_to_li.accounting_code, fa_to.accounting_code) AS account_code,
+      IF(fa_to.id IS NULL, contact_to_fi.display_name, contact_to_fa.display_name) AS contact_name
       FROM civicrm_entity_batch eb
       LEFT JOIN civicrm_financial_trxn ft ON (eb.entity_id = ft.id AND eb.entity_table = 'civicrm_financial_trxn')
       LEFT JOIN civicrm_financial_account fa_to ON fa_to.id = ft.to_financial_account_id
       LEFT JOIN civicrm_entity_financial_trxn eft ON (eft.financial_trxn_id = ft.id AND eft.entity_table = 'civicrm_contribution')
       LEFT JOIN civicrm_contribution cc ON (eft.entity_id = cc.id) 
       LEFT JOIN civicrm_contact contact_to ON contact_to.id = fa_to.contact_id
+      LEFT JOIN civicrm_entity_financial_trxn efti ON (efti.financial_trxn_id  = ft.id AND efti.entity_table = 'civicrm_financial_item')
+      LEFT JOIN civicrm_financial_item fi ON fi.id = efti.entity_id
+      LEFT JOIN civicrm_financial_account fa_to_li ON fa_to_li.id = fi.financial_account_id 
+      LEFT JOIN civicrm_contact contact_to_fa ON contact_to_fa.id=fa_to.contact_id
+      LEFT JOIN civicrm_contact contact_to_fi ON contact_to_fi.id=fi.contact_id
       WHERE eb.batch_id = ( %1 )
 UNION
       SELECT
@@ -260,6 +265,36 @@ ORDER BY batch_id, ft_id, fi_id, credit_or_debit DESC;";
   }
 
   public function exportTRANS() {
+  }
+
+  public function makeExport($export) {
+    foreach ($export as $batchId => $dao) {
+      $financialItems = array();
+      $this->_batchIds = $batchId;
+
+      $batchItems = array();
+      $queryResults = array();
+
+      while ($dao->fetch()) {
+        $financialItems[] = array(
+          'Batch ID' => $dao->batch_id,
+          'Date' => $this->format($dao->trxn_date, 'date'),
+          'Reference' => $dao->contact_name,
+          'Acct' => $dao->account_code,
+          'Amount' => $this->format($dao->amount, 'money'),
+        );
+
+        end($financialItems);
+        $batchItems[] = &$financialItems[key($financialItems)];
+        $queryResults[] = get_object_vars($dao);
+      }
+
+      CRM_Utils_Hook::batchItems($queryResults, $batchItems);
+
+      $financialItems['headers'] = self::formatHeaders($financialItems);
+      self::export($financialItems);
+    }
+    parent::initiateDownload();
   }
 
 }
