@@ -2,7 +2,7 @@
 <extension key="biz.jmaconsulting.greatplains" type="module">
   <file>greatplains</file>
   <name>Financial Batch Export to Microsoft Great Plains</name>
-  <description>Financial Batch Export to Microsoft Great Plains</description>
+  <description>Adds support for exporting financial batches to Microsoft Great Plains</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>JMA Consulting</author>
@@ -21,7 +21,7 @@
     <ver>4.6</ver>
     <ver>4.7</ver>
   </compatibility>
-  <comments>Financial Batch Export to Microsoft Great Plains</comments>
+  <comments></comments>
   <civix>
     <namespace>CRM/Greatplains</namespace>
   </civix>
