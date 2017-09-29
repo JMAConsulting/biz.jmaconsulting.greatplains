@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <extension key="biz.jmaconsulting.greatplains" type="module">
   <file>greatplains</file>
-  <name>Financial Batch Export to Microsoft Great Plains</name>
+  <name>Great Plains Accounting Export</name>
   <description>Adds support for exporting financial batches to Microsoft Great Plains</description>
   <license>AGPL-3.0</license>
   <maintainer>
