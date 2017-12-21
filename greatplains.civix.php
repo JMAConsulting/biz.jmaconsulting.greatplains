@@ -19,7 +19,7 @@ function _greatplains_civix_civicrm_config(&$config = NULL) {
   $extRoot = dirname(__FILE__) . DIRECTORY_SEPARATOR;
   $extDir = $extRoot . 'templates';
 
-  if (is_array( $template->template_dir)) {
+  if (is_array($template->template_dir)) {
     array_unshift($template->template_dir, $extDir);
   }
   else {
