@@ -36,7 +36,7 @@
  */
 /**
  * This files supports the export of financial batches to Microsoft Great Plains in the format it expects.
- */ 
+ */
 class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat {
 
   /**
@@ -80,7 +80,7 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
    * @return Object
    */
   public function generateExportQuery($batchId) {
-    $sql = "SELECT batch_id, trxn_date, amount, account_code, contact_name FROM 
+    $sql = "SELECT batch_id, trxn_date, amount, account_code, contact_name FROM
 (
       SELECT
       ft.id as ft_id,
@@ -95,11 +95,11 @@ class CRM_Financial_BAO_ExportFormat_MGP extends CRM_Financial_BAO_ExportFormat 
       LEFT JOIN civicrm_financial_trxn ft ON (eb.entity_id = ft.id AND eb.entity_table = 'civicrm_financial_trxn')
       LEFT JOIN civicrm_financial_account fa_to ON fa_to.id = ft.to_financial_account_id
       LEFT JOIN civicrm_entity_financial_trxn eft ON (eft.financial_trxn_id = ft.id AND eft.entity_table = 'civicrm_contribution')
-      LEFT JOIN civicrm_contribution cc ON (eft.entity_id = cc.id) 
+      LEFT JOIN civicrm_contribution cc ON (eft.entity_id = cc.id)
       LEFT JOIN civicrm_contact contact_to ON contact_to.id = fa_to.contact_id
       LEFT JOIN civicrm_entity_financial_trxn efti ON (efti.financial_trxn_id  = ft.id AND efti.entity_table = 'civicrm_financial_item')
       LEFT JOIN civicrm_financial_item fi ON fi.id = efti.entity_id
-      LEFT JOIN civicrm_financial_account fa_to_li ON fa_to_li.id = fi.financial_account_id 
+      LEFT JOIN civicrm_financial_account fa_to_li ON fa_to_li.id = fi.financial_account_id
       LEFT JOIN civicrm_contact contact_to_fa ON contact_to_fa.id=fa_to.contact_id
       LEFT JOIN civicrm_contact contact_to_fi ON contact_to_fi.id=fi.contact_id
       WHERE eb.batch_id = ( %1 )
@@ -121,7 +121,7 @@ UNION
       LEFT JOIN civicrm_contact contact_from_contrib ON contact_from_contrib.id = cc.contact_id
       LEFT JOIN civicrm_entity_financial_trxn efti ON (efti.financial_trxn_id  = ft.id AND efti.entity_table = 'civicrm_financial_item')
       LEFT JOIN civicrm_financial_item fi ON fi.id = efti.entity_id
-      LEFT JOIN civicrm_financial_account fa_from_li ON fa_from_li.id = fi.financial_account_id 
+      LEFT JOIN civicrm_financial_account fa_from_li ON fa_from_li.id = fi.financial_account_id
       LEFT JOIN civicrm_contact contact_from_fa ON contact_from_fa.id=fa_from.contact_id
       WHERE eb.batch_id = ( %1 )
 ) as S1
@@ -208,7 +208,6 @@ ORDER BY batch_id, ft_id, fi_id, credit_or_debit DESC;";
     }
     parent::initiateDownload();
   }
-  
 
   /**
    * @param string $s

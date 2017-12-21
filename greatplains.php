@@ -14,8 +14,6 @@ function greatplains_civicrm_config(&$config) {
 /**
  * Implements hook_civicrm_xmlMenu().
  *
- * @param array $files
- *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_xmlMenu
  */
 function greatplains_civicrm_xmlMenu(&$files) {
@@ -61,13 +59,6 @@ function greatplains_civicrm_disable() {
 /**
  * Implements hook_civicrm_upgrade().
  *
- * @param $op string, the type of operation being performed; 'check' or 'enqueue'
- * @param $queue CRM_Queue_Queue, (for 'enqueue') the modifiable list of pending up upgrade tasks
- *
- * @return mixed
- *   Based on op. for 'check', returns array(boolean) (TRUE if upgrades are pending)
- *                for 'enqueue', returns void
- *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_upgrade
  */
 function greatplains_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
@@ -112,8 +103,6 @@ function greatplains_civicrm_managed(&$entities) {
  *
  * Generate a list of case-types.
  *
- * @param array $caseTypes
- *
  * Note: This hook only runs in CiviCRM 4.4+.
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_caseTypes
@@ -133,7 +122,7 @@ function greatplains_civicrm_caseTypes(&$caseTypes) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_caseTypes
  */
 function greatplains_civicrm_angularModules(&$angularModules) {
-_greatplains_civix_civicrm_angularModules($angularModules);
+  _greatplains_civix_civicrm_angularModules($angularModules);
 }
 
 /**
@@ -150,8 +139,6 @@ function greatplains_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
  *
  * Set a default value for an event price set field.
  *
- * @param string $formName
- * @param CRM_Core_Form $form
  */
 function greatplains_civicrm_buildForm($formName, &$form) {
   if ($formName == 'CRM_Financial_Form_Search') {
@@ -184,8 +171,6 @@ function greatplains_get_export_types($optionTypes = NULL) {
 /**
  * Implements hook_civicrm_postProcess().
  *
- * @param string $formName
- * @param CRM_Core_Form $form
  */
 function greatplains_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Financial_Form_Export') {
